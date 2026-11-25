@@ -327,7 +327,7 @@ app.get("/api/reports/property-ledger", (req, res) => {
   const propertyId = Number(req.query.property_id) || 6;
   const sql = `
     SELECT
-        fe.entry_id, fe.reference_no, fe.occurred_at, fe.entry_type,
+        fe.entry_id, fe.occurred_at, fe.entry_type,
         fe.direction, fe.amount, fe.currency,
         CASE
             WHEN fe.reversal_of_entry_id IS NOT NULL THEN CONCAT('Đảo cho bút toán #', fe.reversal_of_entry_id)
@@ -373,7 +373,7 @@ app.get("/api/reports/ownership-discrepancies", (req, res) => {
 app.get("/api/reports/unmonetized-active-listings", (req, res) => {
   const sql = `
     SELECT lst.listing_id, p.address, p.unit, lst.listing_type, lst.offer_amount,
-           lst.currency, a.full_name AS lead_agent_name,
+           a.full_name AS lead_agent_name,
            DATEDIFF(CURRENT_DATE, lst.start_date) AS days_on_market
     FROM listing lst
     JOIN property p ON lst.property_id = p.property_id
