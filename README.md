@@ -1,5 +1,5 @@
 # Giảng viên
-Lê Hà Thanh <br/>
+Lê Hà Thanh lehathanh@ptithcm.edu.vn<br/>
 
 # Giới thiệu thành viên
 
