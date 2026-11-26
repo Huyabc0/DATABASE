@@ -4,15 +4,24 @@ import { executeBenchmarkQuery } from "../utils/benchmark.js";
 const SCHEMA_TABLE_MAP = {
   owners: { table: "owner", pk: "owner_id" },
   properties: { table: "property", pk: "property_id" },
-  "property-ownerships": { table: "property_ownership", pk: "owner_id,property_id,valid_from" },
+  "property-ownerships": {
+    table: "property_ownership",
+    pk: "owner_id,property_id,valid_from",
+  },
   agents: { table: "agent", pk: "agent_id" },
   listings: { table: "listing", pk: "listing_id" },
   "agent-assignments": { table: "agent_assignment", pk: "assignment_id" },
   tenants: { table: "tenant", pk: "tenant_id" },
   leases: { table: "lease", pk: "lease_id" },
   "lease-tenants": { table: "lease_tenant", pk: "lease_id,tenant_id" },
-  "maintenance-requests": { table: "maintenance_request", pk: "maintenance_id" },
-  "property-status-histories": { table: "property_status_history", pk: "status_history_id" },
+  "maintenance-requests": {
+    table: "maintenance_request",
+    pk: "maintenance_id",
+  },
+  "property-status-histories": {
+    table: "property_status_history",
+    pk: "status_history_id",
+  },
   "financial-entries": { table: "financial_entry", pk: "entry_id" },
 };
 
@@ -25,19 +34,26 @@ export async function describeResourceTable(resource) {
 
 // --- 3 SQL VIEWS ---
 export function getPropertyCurrentStatusView() {
-  return executeBenchmarkQuery("SELECT * FROM v_property_current_status LIMIT 100");
+  return executeBenchmarkQuery(
+    "SELECT * FROM v_property_current_status LIMIT 100",
+  );
 }
 
 export function getPropertyLedgerBalanceView() {
-  return executeBenchmarkQuery("SELECT * FROM v_property_ledger_balance LIMIT 100");
+  return executeBenchmarkQuery(
+    "SELECT * FROM v_property_ledger_balance LIMIT 100",
+  );
 }
 
 export function getActiveLeasesDetailView() {
-  return executeBenchmarkQuery("SELECT * FROM v_active_leases_detail LIMIT 100");
+  return executeBenchmarkQuery(
+    "SELECT * FROM v_active_leases_detail LIMIT 100",
+  );
 }
 
 // --- 12 BÁO CÁO PHỨC TẠP ---
 export function getPropertyCashFlowReport() {
+  //Q01 – Báo cáo tổng hợp thu nhập, chi phí và dòng tiền theo từng bất động sản
   const sql = `
     SELECT
         p.property_id,
@@ -57,20 +73,24 @@ export function getPropertyCashFlowReport() {
 }
 
 export function getAgentPerformanceReport() {
+  //Q02 – Đánh giá và xếp hạng hiệu quả làm việc của nhân viên môi giới
   const sql = `
     WITH agent_lead_listings AS (
-        SELECT DISTINCT agent_id, listing_id
-        FROM agent_assignment
-        WHERE assignment_role = 'LEAD'
+      SELECT
+          agent_id,
+          listing_id,
+          MAX(CASE WHEN assigned_to IS NULL THEN 1 ELSE 0 END) AS is_currently_leading
+      FROM agent_assignment
+      WHERE assignment_role = 'LEAD'
+      GROUP BY agent_id, listing_id
     )
     SELECT
         a.agent_id, a.license_no, a.full_name,
-        COUNT(DISTINCT CASE WHEN aa.assignment_role = 'LEAD' AND aa.assigned_to IS NULL THEN aa.listing_id END) AS active_lead_count,
+        COALESCE(SUM(all_lead.is_currently_leading), 0) AS active_lead_count,
         COUNT(DISTINCT l_closed.lease_id) AS closed_leases_count,
         COALESCE(SUM(l_closed.monthly_rent * 12), 0) AS annualized_closed_rent_value,
         RANK() OVER (ORDER BY COALESCE(SUM(l_closed.monthly_rent * 12), 0) DESC) AS performance_rank
     FROM agent a
-    LEFT JOIN agent_assignment aa ON a.agent_id = aa.agent_id
     LEFT JOIN agent_lead_listings all_lead ON a.agent_id = all_lead.agent_id
     LEFT JOIN listing lst ON all_lead.listing_id = lst.listing_id
     LEFT JOIN lease l_closed ON lst.listing_id = l_closed.origin_listing_id AND l_closed.lease_status IN ('ACTIVE', 'EXPIRED')
@@ -81,6 +101,7 @@ export function getAgentPerformanceReport() {
 }
 
 export function getOwnerEntitlementReport() {
+  //Q03 – Tính toán phần thu nhập được phân chia cho từng chủ sở hữu theo tỷ lệ sở hữu
   const sql = `
     WITH property_net_income AS (
         SELECT property_id, currency,
@@ -105,6 +126,7 @@ export function getOwnerEntitlementReport() {
 }
 
 export function getPropertyLedgerReport(propertyId) {
+  //Q04 – Tra cứu lịch sử thu chi và tính số dư lũy kế của bất động sản
   const sql = `
     SELECT
         fe.entry_id, fe.occurred_at, fe.entry_type,
@@ -125,6 +147,7 @@ export function getPropertyLedgerReport(propertyId) {
 }
 
 export function getAboveAvgRentLeasesReport() {
+  //Q05 – Tìm các hợp đồng thuê có giá thuê cao hơn mức trung bình toàn hệ thống
   const sql = `
     SELECT p.property_id, p.address, p.unit, p.area, l.monthly_rent,
            ROUND(l.monthly_rent / p.area, 0) AS rent_per_sqm
@@ -138,6 +161,7 @@ export function getAboveAvgRentLeasesReport() {
 }
 
 export function getOwnershipDiscrepanciesReport() {
+  //Q06 – Kiểm tra các bất động sản có tổng tỷ lệ sở hữu không bằng 100%
   const sql = `
     SELECT p.property_id, p.address, p.unit,
            COUNT(po.owner_id) AS active_owner_count,
@@ -151,6 +175,7 @@ export function getOwnershipDiscrepanciesReport() {
 }
 
 export function getUnmonetizedActiveListingsReport() {
+  //Q07 – Tìm các tin đăng đang hoạt động nhưng chưa phát sinh giao dịch tài chính
   const sql = `
     SELECT lst.listing_id, p.address, p.unit, lst.listing_type, lst.offer_amount,
            a.full_name AS lead_agent_name,
@@ -167,6 +192,7 @@ export function getUnmonetizedActiveListingsReport() {
 }
 
 export function getMaintenanceByPropertyTypeReport() {
+  //Q08 – Thống kê số lượng yêu cầu bảo trì và thời gian xử lý theo loại hình bất động sản
   const sql = `
     SELECT p.property_type, COUNT(mr.maintenance_id) AS total_requests,
            SUM(CASE WHEN mr.blocking_flag = TRUE THEN 1 ELSE 0 END) AS blocking_requests,
@@ -181,6 +207,7 @@ export function getMaintenanceByPropertyTypeReport() {
 }
 
 export function getPropertyTimelineReport(propertyId) {
+  //Q09 – Tổng hợp lịch sử biến động trạng thái, bảo trì và giao dịch tài chính của bất động sản
   const sql = `
     WITH property_timeline AS (
       SELECT valid_from AS event_timestamp, 'STATUS_HISTORY' AS source_module,
@@ -204,6 +231,7 @@ export function getPropertyTimelineReport(propertyId) {
 }
 
 export function getTenantLeaseSummaryReport() {
+  //Q10 – Thống kê hợp đồng thuê và tổng tiền thuê hàng tháng theo từng khách thuê
   const sql = `
     SELECT t.tenant_id, t.full_name, t.email, t.phone,
            COUNT(DISTINCT lt.lease_id) AS total_leases,
@@ -219,6 +247,7 @@ export function getTenantLeaseSummaryReport() {
 }
 
 export function getRentPriceVarianceReport() {
+  //Q11 – Phân tích chênh lệch giữa giá thuê chào ban đầu và giá thuê trong hợp đồng
   const sql = `
     SELECT l.lease_id, p.address, p.unit, lst.listing_id,
            lst.offer_amount AS listed_rent, l.monthly_rent AS contracted_rent,
@@ -240,6 +269,7 @@ export function getRentPriceVarianceReport() {
 }
 
 export function getPropertyOccupancyReport() {
+  //Q12 – Thống kê số ngày bất động sản ở từng trạng thái và tính tỷ lệ khai thác cho thuê
   const sql = `
     WITH status_durations AS (
         SELECT property_id, status,

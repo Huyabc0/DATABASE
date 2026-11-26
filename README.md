@@ -1,3 +1,6 @@
+# Giảng viên
+Lê Hà Thanh <br/>
+
 # Giới thiệu thành viên
 
 thien511 Phạm Tâm Phúc Thiện <br/>
@@ -33,35 +36,40 @@ cd real-estate-project
 
 ## 3. Thiết lập Cơ sở dữ liệu (MySQL Workbench)
 
-1. Mở **MySQL Workbench** và kết nối vào `Local instance MySQL80`.
-2. import database:
-   Tại giao diện làm việc của kết nối MySQL hiện tại, nhìn lên thanh menu trên cùng, chọn Server > Data Import.
-   Chọn Import from Self-Contained File, sau đó nhấn nút ... và chọn file real_estate_ledger.sql .
-   Tại mục Default Target Schema, nhấp vào danh sách thả xuống và chọn real_estate_ledger
-   Sau đó, nhấn nút Start Import ở góc dưới cùng bên phải màn hình.
-   Tương tự các bước trên import thêm file trigger.sql
+1. **Mở MySQL Workbench** và kết nối vào `Local instance MySQL80`.
 
-3. **Kiểm tra xem import đã thành công chưa**
-   Dùng thanh menu: Nhìn lên góc trên cùng bên trái màn hình, nhấn vào File > chọn New Query Tab.
-   Dán đoạn này vô
-   USE real_estate_ledger;
+2. **Import database và data mẫu:**
+   - Tại giao diện làm việc của kết nối MySQL hiện tại, nhìn lên thanh menu trên cùng, chọn **Server > Data Import**.
+   - Chọn **Import from Self-Contained File**, sau đó nhấn nút **...** và chọn file `real_estate_ledger.sql`.
+   - Tại mục **Default Target Schema**, nhấp vào danh sách thả xuống và chọn `real_estate_ledger`.
+   - Sau đó, nhấn nút **Start Import** ở góc dưới cùng bên phải màn hình.
+   - Tương tự các bước trên, import thêm file `trigger.sql`.
 
-   SHOW TRIGGERS;
-   SHOW PROCEDURE STATUS WHERE Db = DATABASE();
-   select _ from owner;
-   select _ from property_ownership;
-   select _ from property;
-   select _ from agent;
-   select _ from listing;
-   select _ from agent_assignment;
-   select _ from tenant;
-   select _ from lease;
-   select _ from lease_tenant;
-   select _ from maintenance_request;
-   select _ from property_status_history;
-   select _ from financial_entry;
-   sau đó ấn biểu tượng tia sét **execute** để chạy sẽ thấy tất cả các bảng kèm dữ liệu hiện ra và các trigger hiện ra
+3. **Kiểm tra xem import đã thành công chưa:**
+   - Dùng thanh menu: Nhìn lên góc trên cùng bên trái màn hình, nhấn vào **File > chọn New Query Tab**.
+   - Dán đoạn lệnh sau vào:
 
+```sql
+USE real_estate_ledger;
+
+SHOW TRIGGERS;
+SHOW PROCEDURE STATUS WHERE Db = DATABASE();
+
+SELECT * FROM owner;
+SELECT * FROM property_ownership;
+SELECT * FROM property;
+SELECT * FROM agent;
+SELECT * FROM listing;
+SELECT * FROM agent_assignment;
+SELECT * FROM tenant;
+SELECT * FROM lease;
+SELECT * FROM lease_tenant;
+SELECT * FROM maintenance_request;
+SELECT * FROM property_status_history;
+SELECT * FROM financial_entry;
+```
+
+   - Sau đó, ấn biểu tượng tia sét (**Execute**) để chạy; bạn sẽ thấy tất cả các bảng kèm dữ liệu và các trigger hiện ra.
 > **Lưu ý:** Nếu khi chạy Backend gặp lỗi `Access denied for user 'root'@'localhost'`, hãy chạy 2 dòng lệnh sau trong MySQL Workbench để đồng bộ chuẩn xác thực mật khẩu:
 >
 > ```sql

@@ -99,7 +99,7 @@ CREATE TABLE `financial_entry` (
   `listing_id` int DEFAULT NULL COMMENT 'Mã tin đăng tham chiếu (Khóa ngoại tùy chọn)',
   `lease_id` int DEFAULT NULL COMMENT 'Mã hợp đồng thuê tham chiếu (Khóa ngoại tùy chọn)',
   `maintenance_id` int DEFAULT NULL COMMENT 'Mã yêu cầu bảo trì tham chiếu (Khóa ngoại tùy chọn)',
-  `entry_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Loại hình (RENT, DEPOSIT, REPAIR_FEE, COMMISSION)',
+  `entry_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Loại hình (RENT, DEPOSIT, DEPOSIT_REFUND, REPAIR_FEE, COMMISSION)',
   `direction` varchar(5) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Chiều dòng tiền (IN: Thu vào / CREDIT, OUT: Chi ra / DEBIT)',
   `amount` decimal(15,2) NOT NULL COMMENT 'Số tiền giao dịch (luôn dương)',
   `currency` varchar(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'VND' COMMENT 'Mã tiền tệ ISO 4217 (VND, USD, EUR)',
