@@ -33,10 +33,9 @@ export async function describeResourceTable(resource) {
 }
 
 // --- 3 SQL VIEWS ---
-export function getPropertyCurrentStatusView() {
-  return executeBenchmarkQuery(
-    "SELECT * FROM v_property_current_status LIMIT 100",
-  );
+export function getPropertyCurrentStatusView(sort = "desc") {
+  const direction = sort === "desc" ? "DESC" : "ASC";
+  return executeBenchmarkQuery(`SELECT * FROM v_property_current_status ORDER BY property_id ${direction} LIMIT 100`);
 }
 
 export function getPropertyLedgerBalanceView() {

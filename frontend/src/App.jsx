@@ -550,7 +550,7 @@ export default function App() {
         const [propRes, listRes, viewRes] = await Promise.all([
           fetch(`${API_BASE}/properties?page=1&limit=100`),
           fetch(`${API_BASE}/listings?page=1&limit=100`),
-          fetch(`${API_BASE}/views/property-current-status`).catch(() => null),
+          fetch(`${API_BASE}/views/property-current-status?sort=desc`).catch(() => null),
         ]);
         const propJson = await propRes.json();
         const listJson = await listRes.json();
@@ -564,6 +564,7 @@ export default function App() {
             ownersMap[v.property_id] = v.current_owners || "";
           });
         }
+        
         setMarketData({
           properties: propJson.data || [],
           listings: listJson.data || [],
@@ -1174,6 +1175,7 @@ export default function App() {
                   const visual = getPropertyCardVisual(item.property_type);
                   const lst = item.primaryListing;
                   const isRentable = item.current_status === "AVAILABLE";
+                  const ownerNames = item.ownersText.replace(/ \(\d+(?:\.\d+)?%\)(?=, |$)/g, "");
 
                   return (
                     <article className="nt-prop-card" key={item.property_id}>
@@ -1227,7 +1229,7 @@ export default function App() {
 
                         <div className="nt-card-owner">
                           <span>Chủ sở hữu: </span>
-                          <strong>{item.ownersText || "Chưa gán chủ sở hữu"}</strong>
+                          <strong>{ownerNames || "Chưa gán chủ sở hữu"}</strong>
                         </div>
 
                         <div className="nt-card-actions">

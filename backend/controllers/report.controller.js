@@ -21,8 +21,8 @@ export async function getTableSchema(req, res) {
 }
 
 // --- 3 SQL VIEWS ---
-export const getPropertyCurrentStatusView = handleBenchmark(() =>
-  reportService.getPropertyCurrentStatusView()
+export const getPropertyCurrentStatusView = handleBenchmark((req) =>
+  reportService.getPropertyCurrentStatusView(req.query.sort)
 );
 export const getPropertyLedgerBalanceView = handleBenchmark(() =>
   reportService.getPropertyLedgerBalanceView()

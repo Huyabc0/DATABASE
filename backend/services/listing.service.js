@@ -27,7 +27,34 @@ export async function getListingById(listingId) {
   return row || null;
 }
 
-export async function createListing(data) {
+export async function withListingCreationLock(propertyId, work) {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    // Khóa bất động sản ngay cả khi chưa có dòng nào trong bảng listing.
+    await conn.query("SELECT property_id FROM property WHERE property_id = ? FOR UPDATE", [
+      propertyId,
+    ]);
+    const result = await work(conn);
+    await conn.commit();
+    return result;
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
+
+export async function findActiveListing(propertyId, conn) {
+  const [[row]] = await conn.query(
+    "SELECT listing_id FROM listing WHERE property_id = ? AND listing_status = 'ACTIVE' ORDER BY listing_id LIMIT 1",
+    [propertyId]
+  );
+  return row || null;
+}
+
+export async function createListing(data, conn = pool) {
   const payload = {
     property_id: data.property_id,
     listing_type: data.listing_type,
@@ -36,7 +63,7 @@ export async function createListing(data) {
     end_date: data.end_date ?? null,
     listing_status: data.listing_status ?? "ACTIVE",
   };
-  const [result] = await pool.query("INSERT INTO listing SET ?", [payload]);
+  const [result] = await conn.query("INSERT INTO listing SET ?", [payload]);
   return { insertId: result.insertId };
 }
 
