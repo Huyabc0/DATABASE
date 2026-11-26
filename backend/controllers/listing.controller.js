@@ -15,7 +15,8 @@ function validateListingData(data, isUpdate = false) {
   }
   if (
     !isUpdate &&
-    (!data.property_id ||
+    (!["string", "number"].includes(typeof data.property_id) ||
+      !parsePositiveInt(data.property_id) ||
       !data.listing_type ||
       data.offer_amount === undefined ||
       !data.start_date)
@@ -61,11 +62,24 @@ export async function getListingById(req, res) {
 export async function createListing(req, res) {
   const data = sanitizePayload(req.body);
   delete data.listing_id;
+  if (data.listing_status === null) delete data.listing_status;
   const errMsg = validateListingData(data, false);
   if (errMsg) return res.status(400).json({ error: errMsg });
+  const propertyId = parsePositiveInt(data.property_id);
+  data.property_id = propertyId;
 
   try {
-    const result = await listingService.createListing(data);
+    const result = await listingService.withListingCreationLock(propertyId, async (conn) => {
+      const activeListing = await listingService.findActiveListing(propertyId, conn);
+      if (activeListing) return { activeListingId: activeListing.listing_id };
+
+      return listingService.createListing(data, conn);
+    });
+    if (result.activeListingId) {
+      return res.status(409).json({
+        error: `BR06: Bất động sản #${propertyId} đã có tin đăng #${result.activeListingId} ở trạng thái ACTIVE.`,
+      });
+    }
     res.status(201).json({
       message: `Thêm mới tin đăng thành công (ID = ${result.insertId})`,
       insertId: result.insertId,
